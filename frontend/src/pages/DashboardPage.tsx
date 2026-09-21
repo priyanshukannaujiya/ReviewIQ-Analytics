@@ -93,7 +93,7 @@ export default function DashboardPage() {
         >
           <h2 className="text-lg font-semibold text-slate-900">Recent reviews</h2>
           <div className="mt-5 space-y-4">
-            {recentReviews.length > 0 ? recentReviews.map((item, index) => (
+            {recentReviews.length > 0 ? recentReviews.map((item) => (
               <div 
                 key={item.id} 
                 className="rounded-xl border border-slate-200 p-4 text-sm text-slate-600 hover:border-brand-200 hover:bg-brand-50 transition-colors duration-200"
