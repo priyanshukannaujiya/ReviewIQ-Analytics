@@ -23,6 +23,16 @@ export default function SignupPage() {
     event.preventDefault()
     setError('')
 
+    if (form.password !== form.confirm_password) {
+      setError('Passwords do not match.')
+      return
+    }
+
+    if (form.password.length < 6) {
+      setError('Password must be at least 6 characters.')
+      return
+    }
+
     try {
       await signup(form)
       navigate('/dashboard')
@@ -33,7 +43,7 @@ export default function SignupPage() {
       } else if (typeof detail === 'string') {
         setError(detail);
       } else {
-        setError('Unable to create your account.');
+        setError('Unable to create your account. Please try again.');
       }
     }
   }

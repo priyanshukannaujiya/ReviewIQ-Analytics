@@ -1,4 +1,8 @@
+import { useAuth } from '../context/AuthContext'
+
 export default function SettingsPage() {
+  const { user } = useAuth()
+
   return (
     <div className="p-6">
       <div className="mb-8">
@@ -13,8 +17,8 @@ export default function SettingsPage() {
             <input
               type="text"
               disabled
-              className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm p-2 border bg-slate-50"
-              value="Your Name"
+              className="mt-1 block w-full rounded-md border-slate-300 shadow-sm sm:text-sm p-2 border bg-slate-50"
+              value={user?.name || ''}
             />
           </div>
           <div>
@@ -22,8 +26,17 @@ export default function SettingsPage() {
             <input
               type="email"
               disabled
-              className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm p-2 border bg-slate-50"
-              value="user@example.com"
+              className="mt-1 block w-full rounded-md border-slate-300 shadow-sm sm:text-sm p-2 border bg-slate-50"
+              value={user?.email || ''}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700">Company</label>
+            <input
+              type="text"
+              disabled
+              className="mt-1 block w-full rounded-md border-slate-300 shadow-sm sm:text-sm p-2 border bg-slate-50"
+              value={user?.company_name || ''}
             />
           </div>
         </div>

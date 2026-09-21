@@ -7,18 +7,22 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
   const { login } = useAuth()
   const navigate = useNavigate()
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault()
     setError('')
+    setLoading(true)
 
     try {
       await login(email, password)
       navigate('/dashboard')
     } catch (err: any) {
       setError(err?.response?.data?.detail || 'Unable to sign in. Please try again.')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -43,8 +47,8 @@ export default function LoginPage() {
 
           {error && <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>}
 
-          <button type="submit" className="w-full rounded-xl bg-brand-500 px-4 py-3 font-semibold text-white shadow-soft transition hover:bg-brand-600">
-            Sign In
+          <button type="submit" disabled={loading} className="w-full rounded-xl bg-brand-500 px-4 py-3 font-semibold text-white shadow-soft transition hover:bg-brand-600 disabled:opacity-60 disabled:cursor-not-allowed">
+            {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
 
@@ -53,7 +57,7 @@ export default function LoginPage() {
         </div>
 
         <div className="mt-4 text-center text-sm text-slate-600">
-          Don’t have an account?{' '}
+          Don't have an account?{' '}
           <Link to="/signup" className="font-semibold text-brand-600">Create account</Link>
         </div>
       </div>
