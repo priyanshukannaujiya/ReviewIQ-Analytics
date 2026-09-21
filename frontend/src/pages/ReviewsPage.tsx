@@ -10,7 +10,7 @@ export default function ReviewsPage() {
   const queryClient = useQueryClient()
 
   const handleUploadClick = () => {
-    document.getElementById('file-upload')?.click()
+    fileInputRef.current?.click()
   }
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -103,6 +103,7 @@ export default function ReviewsPage() {
         </p>
 
         <input
+          id="file-upload"
           type="file"
           accept=".csv"
           className="hidden"
