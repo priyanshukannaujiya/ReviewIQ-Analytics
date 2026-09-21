@@ -1,21 +1,22 @@
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import api from '../services/api'
 import { UploadCloud, CheckCircle, AlertCircle } from 'lucide-react'
+import { useQueryClient } from '@tanstack/react-query'
 
 export default function ReviewsPage() {
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadStatus, setUploadStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const queryClient = useQueryClient()
 
   const handleUploadClick = () => {
-    fileInputRef.current?.click()
+    document.getElementById('file-upload')?.click()
   }
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
     if (!file) return
 
-    if (!file.name.toLowerCase().endsWith('.csv')) {
+    if (!file.name.endsWith('.csv')) {
       setUploadStatus({ type: 'error', message: 'Please upload a valid .csv file.' })
       return
     }
@@ -29,6 +30,10 @@ export default function ReviewsPage() {
     try {
       const response = await api.post('/uploads/reviews', formData)
       setUploadStatus({ type: 'success', message: response.data.message || 'File uploaded successfully!' })
+      // Invalidate dashboard caches so it fetches fresh data
+      queryClient.invalidateQueries({ queryKey: ['dashboard_overview'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard_sentiment'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard_recent_reviews'] })
     } catch (err: any) {
       setUploadStatus({ 
         type: 'error', 

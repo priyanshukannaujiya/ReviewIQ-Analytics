@@ -29,7 +29,6 @@ export default function DashboardPage() {
   const { data: overview, isLoading: loadingOverview } = useQuery<DashboardOverview>({
     queryKey: ['dashboard_overview'],
     queryFn: async () => (await api.get('/analytics/overview')).data,
-    initialData: { total_reviews: 0, positive_reviews: 0, negative_reviews: 0, open_complaints: 0, high_priority_complaints: 0 },
   })
 
   const { data: sentiment = [] } = useQuery<{name: string, value: number, fill: string}[]>({
