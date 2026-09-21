@@ -1,36 +1,55 @@
-# Deploying ReviewIQ with GitHub Actions (CI/CD)
+# Deploying ReviewIQ (Render + Vercel + Neon)
 
-This project is configured with a fully automated CI/CD pipeline using GitHub Actions. Whenever you push changes to the `main` branch, the backend is automatically deployed to Google Cloud Run, and the frontend is deployed to Firebase Hosting.
+This guide provides instructions to deploy the ReviewIQ monorepo architecture:
+- **Frontend**: Vercel
+- **Backend**: Render (Docker)
+- **Database**: Neon (PostgreSQL)
 
-## Initial Setup Prerequisites
+## 1. Prerequisites
+- A GitHub repository containing this codebase.
+- Accounts on [Render](https://render.com), [Vercel](https://vercel.com), and [Neon](https://neon.tech).
 
-Before the automated workflows can run, you need to configure Secrets in your GitHub repository so that GitHub has permission to deploy on your behalf.
+## 2. Database Configuration (Neon)
+1. In your Neon dashboard, get your PostgreSQL Connection String.
+2. Note this string down as `DATABASE_URL`. It should look like `postgresql+psycopg://user:pass@host/dbname?sslmode=require`.
 
-### 1. Configure Backend Secrets (Google Cloud)
-1. In your Google Cloud Console, create a **Service Account** with the following roles:
-   - Cloud Run Admin
-   - Service Account User
-   - Storage Admin (for Container Registry/Artifact Registry)
-2. Generate a JSON Key for this Service Account.
-3. Go to your GitHub Repository -> **Settings** -> **Secrets and variables** -> **Actions**.
-4. Add the following **New repository secrets**:
-   - `GCP_PROJECT_ID`: Your Google Cloud Project ID (e.g., `reviewiq-production-123`).
-   - `GCP_CREDENTIALS`: Paste the entire content of the JSON Key you downloaded in step 2.
+## 3. Backend Deployment (Render)
+Render is configured via Infrastructure-as-Code using the `render.yaml` file located in the root of the project.
 
-### 2. Configure Frontend Secrets (Firebase)
-1. On your local machine, run `firebase login:ci` in your terminal. This will open a browser window to authenticate.
-2. The CLI will output a token (a long string of characters).
-3. Go back to your GitHub Repository -> **Settings** -> **Secrets and variables** -> **Actions**.
-4. Add the following **New repository secret**:
-   - `FIREBASE_SERVICE_ACCOUNT`: Paste the token generated from the CLI.
+1. Go to your Render Dashboard -> Click **New** -> **Blueprint**.
+2. Connect your GitHub repository.
+3. Render will automatically detect the `render.yaml` file and create a new Web Service for the backend.
+4. During setup, Render will prompt you to enter the environment variables defined in the yaml file:
+   - `DATABASE_URL`: Paste your Neon connection string.
+   - `CORS_ORIGINS`: Temporarily put `*` or `http://localhost:5173`. We will change this to the Vercel URL later.
+   - `SECRET_KEY`: Generate a random secure string (e.g., via `openssl rand -hex 32`).
+5. Click **Apply**. Render will build the Docker container and start the FastAPI service.
+6. Once deployed, copy the **Render URL** (e.g., `https://reviewiq-backend-xxxx.onrender.com`).
 
----
+## 4. Frontend Deployment (Vercel)
+Vercel has native support for Vite React applications.
 
-## How It Works
+1. Go to your Vercel Dashboard -> Click **Add New** -> **Project**.
+2. Import this GitHub repository.
+3. In the configuration screen, set the **Root Directory** to `frontend`.
+4. Vercel will automatically detect the framework as Vite.
+5. Expand the **Environment Variables** section and add:
+   - Name: `VITE_API_URL`
+   - Value: `[YOUR RENDER URL]/api` (e.g., `https://reviewiq-backend-xxxx.onrender.com/api`)
+6. Click **Deploy**.
+7. Once deployed, copy the **Vercel URL** (e.g., `https://reviewiq.vercel.app`).
 
-You do not need to run any manual deployment commands. 
+## 5. Finalizing CORS (Important)
+To secure the backend and allow the frontend to communicate with it, you must update the CORS settings in Render.
 
-- **Backend Updates**: If you modify any files inside the `backend/` directory and push to the `main` branch, the `.github/workflows/cloud-run-deploy.yml` action will trigger. It builds the Docker container and deploys it live to Cloud Run.
-- **Frontend Updates**: If you modify any files inside the `frontend/` directory and push to the `main` branch, the `.github/workflows/firebase-deploy.yml` action will trigger. It builds the Vite app and deploys it live to Firebase Hosting.
+1. Go back to the Render Dashboard -> Select your Web Service.
+2. Go to **Environment**.
+3. Update the `CORS_ORIGINS` variable to point to your new Vercel URL:
+   - Value: `[YOUR VERCEL URL],http://localhost:5173` (e.g., `https://reviewiq.vercel.app,http://localhost:5173`)
+4. Save the changes. Render will automatically restart the backend with the correct CORS configuration.
 
-You can monitor the status of your deployments in the **Actions** tab of your GitHub repository.
+## 6. Architecture Map
+- **Vercel (React Frontend)** -> calls `VITE_API_URL` -> **Render (FastAPI Backend)**
+- **Render (FastAPI Backend)** -> calls `DATABASE_URL` -> **Neon (PostgreSQL Database)**
+
+You are now live!
