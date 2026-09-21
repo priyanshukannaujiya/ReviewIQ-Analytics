@@ -26,10 +26,11 @@ const itemVariant: Variants = {
 }
 
 export default function DashboardPage() {
-  const { data: overview, isLoading: loadingOverview } = useQuery<DashboardOverview>({
+  const { data, isLoading: loadingOverview } = useQuery({
     queryKey: ['dashboard_overview'],
     queryFn: async () => (await api.get('/analytics/overview')).data,
   })
+  const overview = data as DashboardOverview | undefined
 
   const { data: sentiment = [] } = useQuery<{name: string, value: number, fill: string}[]>({
     queryKey: ['dashboard_sentiment'],
