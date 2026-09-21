@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
     database_url: str = "sqlite:///./reviewiq.db"
-    cors_origins: Union[str, List[str]] = ["http://localhost:5173"]
+    cors_origins: Union[str, List[str]] = ["http://localhost:5173", "https://review-iq-analytics.vercel.app"]
 
     model_config = SettingsConfigDict(
         env_file=".env",
