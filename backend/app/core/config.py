@@ -1,5 +1,5 @@
 from functools import lru_cache
-from typing import List
+from typing import List, Union
 
 from pydantic import AnyHttpUrl, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
     database_url: str = "sqlite:///./reviewiq.db"
-    cors_origins: List[str] = ["http://localhost:5173"]
+    cors_origins: Union[str, List[str]] = ["http://localhost:5173"]
 
     model_config = SettingsConfigDict(
         env_file=".env",
