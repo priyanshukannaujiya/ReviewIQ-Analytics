@@ -8,3 +8,6 @@ node_modules/
 dist/
 Beauty.txt
 .DS_Store
+backend/testenv/
+rewrite_migration.py
+*.log
