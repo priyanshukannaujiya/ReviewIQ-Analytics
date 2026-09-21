@@ -37,6 +37,9 @@ export default function ReviewsPage() {
         queryClient.refetchQueries({ queryKey: ['dashboard_overview'] })
         queryClient.refetchQueries({ queryKey: ['dashboard_sentiment'] })
         queryClient.refetchQueries({ queryKey: ['dashboard_recent_reviews'] })
+        queryClient.refetchQueries({ queryKey: ['analytics_overview'] })
+        queryClient.refetchQueries({ queryKey: ['analytics_sentiment'] })
+        queryClient.refetchQueries({ queryKey: ['analytics_trends'] })
         setIsUploading(false)
         return
       }
@@ -59,6 +62,9 @@ export default function ReviewsPage() {
             queryClient.refetchQueries({ queryKey: ['dashboard_overview'] })
             queryClient.refetchQueries({ queryKey: ['dashboard_sentiment'] })
             queryClient.refetchQueries({ queryKey: ['dashboard_recent_reviews'] })
+            queryClient.refetchQueries({ queryKey: ['analytics_overview'] })
+            queryClient.refetchQueries({ queryKey: ['analytics_sentiment'] })
+            queryClient.refetchQueries({ queryKey: ['analytics_trends'] })
           } else if (status === 'failed') {
             isComplete = true
             setUploadStatus({ type: 'error', message: 'Failed to process the reviews.' })

@@ -49,12 +49,18 @@ def get_sentiment(db: Session = Depends(get_db), org: Organization = Depends(get
 
 @router.get("/trends")
 def get_trends(db: Session = Depends(get_db), org: Organization = Depends(get_current_organization)):
-    reviews = db.query(Review).filter(Review.organization_id == org.id, Review.review_date.isnot(None)).all()
+    # Fetch ALL reviews (not just those with review_date)
+    reviews = db.query(Review).filter(Review.organization_id == org.id).all()
     trend = []
     now = datetime.utcnow().date()
     for i in range(7):
         target_date = now - timedelta(days=6 - i)
-        count = sum(1 for r in reviews if r.review_date and r.review_date.date() == target_date)
+        count = 0
+        for r in reviews:
+            # Use review_date if available, otherwise fall back to created_at
+            effective_date = r.review_date.date() if r.review_date else r.created_at.date()
+            if effective_date == target_date:
+                count += 1
         trend.append({
             "date": target_date.strftime("%b %d"), 
             "reviews": count
