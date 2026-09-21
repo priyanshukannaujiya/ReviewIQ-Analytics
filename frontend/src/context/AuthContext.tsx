@@ -20,20 +20,32 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState<User | null>(() => {
+    const cachedUser = localStorage.getItem('reviewiq_user')
+    return cachedUser ? JSON.parse(cachedUser) : null
+  })
+  const [loading, setLoading] = useState(() => !localStorage.getItem('reviewiq_user'))
 
   useEffect(() => {
     const token = localStorage.getItem('reviewiq_token')
     if (!token) {
       setLoading(false)
+      setUser(null)
+      localStorage.removeItem('reviewiq_user')
       return
     }
 
     api
       .get('/auth/me')
-      .then((response) => setUser(response.data))
-      .catch(() => localStorage.removeItem('reviewiq_token'))
+      .then((response) => {
+        setUser(response.data)
+        localStorage.setItem('reviewiq_user', JSON.stringify(response.data))
+      })
+      .catch(() => {
+        localStorage.removeItem('reviewiq_token')
+        localStorage.removeItem('reviewiq_user')
+        setUser(null)
+      })
       .finally(() => setLoading(false))
   }, [])
 
@@ -42,6 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('reviewiq_token', response.data.access_token)
     const me = await api.get('/auth/me')
     setUser(me.data)
+    localStorage.setItem('reviewiq_user', JSON.stringify(me.data))
   }
 
   const signup = async (payload: {
@@ -55,10 +68,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('reviewiq_token', response.data.access_token)
     const me = await api.get('/auth/me')
     setUser(me.data)
+    localStorage.setItem('reviewiq_user', JSON.stringify(me.data))
   }
 
   const logout = () => {
     localStorage.removeItem('reviewiq_token')
+    localStorage.removeItem('reviewiq_user')
     setUser(null)
   }
 
