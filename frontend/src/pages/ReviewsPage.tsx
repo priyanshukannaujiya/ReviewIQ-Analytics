@@ -34,9 +34,9 @@ export default function ReviewsPage() {
       
       if (!uploadId) {
         setUploadStatus({ type: 'success', message: response.data.message || 'File uploaded successfully!' })
-        queryClient.invalidateQueries({ queryKey: ['dashboard_overview'] })
-        queryClient.invalidateQueries({ queryKey: ['dashboard_sentiment'] })
-        queryClient.invalidateQueries({ queryKey: ['dashboard_recent_reviews'] })
+        queryClient.refetchQueries({ queryKey: ['dashboard_overview'] })
+        queryClient.refetchQueries({ queryKey: ['dashboard_sentiment'] })
+        queryClient.refetchQueries({ queryKey: ['dashboard_recent_reviews'] })
         setIsUploading(false)
         return
       }
@@ -56,9 +56,9 @@ export default function ReviewsPage() {
           if (status === 'completed') {
             isComplete = true
             setUploadStatus({ type: 'success', message: `Successfully processed ${statusRes.data.valid_rows} reviews!` })
-            queryClient.invalidateQueries({ queryKey: ['dashboard_overview'] })
-            queryClient.invalidateQueries({ queryKey: ['dashboard_sentiment'] })
-            queryClient.invalidateQueries({ queryKey: ['dashboard_recent_reviews'] })
+            queryClient.refetchQueries({ queryKey: ['dashboard_overview'] })
+            queryClient.refetchQueries({ queryKey: ['dashboard_sentiment'] })
+            queryClient.refetchQueries({ queryKey: ['dashboard_recent_reviews'] })
           } else if (status === 'failed') {
             isComplete = true
             setUploadStatus({ type: 'error', message: 'Failed to process the reviews.' })
