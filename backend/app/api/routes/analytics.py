@@ -51,18 +51,33 @@ def get_sentiment(db: Session = Depends(get_db), org: Organization = Depends(get
 def get_trends(db: Session = Depends(get_db), org: Organization = Depends(get_current_organization)):
     # Fetch ALL reviews for this org
     reviews = db.query(Review).filter(Review.organization_id == org.id).all()
-    trend = []
     now = datetime.utcnow().date()
-    # Show last 30 days for more useful data
+    
+    # Safely extract all review dates
+    dates = []
+    for r in reviews:
+        d = r.review_date or r.created_at
+        if d is not None:
+            if hasattr(d, "date"):
+                dates.append(d.date())
+            elif isinstance(d, str):
+                try:
+                    dates.append(datetime.fromisoformat(d.replace("Z", "")).date())
+                except Exception:
+                    pass
+                    
+    # Anchor to now if within 30 days, or anchor to the latest date in data
+    if dates:
+        max_d = max(dates)
+        anchor_date = now if (now - max_d).days < 30 else max_d
+    else:
+        anchor_date = now
+
+    trend = []
+    # Show 30-day window
     for i in range(30):
-        target_date = now - timedelta(days=29 - i)
-        count = 0
-        for r in reviews:
-            # Use review_date if provided in CSV, otherwise fall back to created_at (upload date)
-            effective_date = r.review_date.date() if r.review_date else r.created_at.date()
-            if effective_date == target_date:
-                count += 1
-        # Only include days that have data or the last 7 days to keep chart clean
+        target_date = anchor_date - timedelta(days=29 - i)
+        count = sum(1 for d in dates if d == target_date)
         if count > 0 or i >= 23:
             trend.append({
                 "date": target_date.strftime("%b %d"),

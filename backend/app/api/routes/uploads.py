@@ -16,6 +16,46 @@ from app.services.review_analyzer import review_analyzer
 router = APIRouter()
 
 
+def _find_field(row: dict, candidates: set, default: str = "") -> str:
+    for k, v in row.items():
+        if k and k.strip().lower().replace(" ", "_").replace(".", "_") in candidates:
+            return str(v).strip() if v is not None else default
+    return default
+
+
+def _parse_rating(val: str, fallback: int = 5) -> int:
+    if not val:
+        return fallback
+    try:
+        r = int(float(val))
+        return max(1, min(5, r))
+    except (ValueError, TypeError):
+        return fallback
+
+
+def _parse_date(date_str: str) -> datetime | None:
+    if not date_str:
+        return None
+    s = date_str.strip()
+    try:
+        return datetime.fromisoformat(s.replace("Z", "+00:00"))
+    except Exception:
+        pass
+    for fmt in ("%Y-%m-%d", "%d-%m-%Y", "%m/%d/%Y", "%d/%m/%Y", "%Y/%m/%d", "%b %d, %Y", "%B %d, %Y"):
+        try:
+            return datetime.strptime(s, fmt)
+        except Exception:
+            pass
+    return None
+
+
+TEXT_KEYS = {"review_text", "review", "text", "body", "content", "comments", "comment", "feedback", "review_body", "description"}
+RATING_KEYS = {"rating", "score", "stars", "star_rating", "overall", "user_rating"}
+TITLE_KEYS = {"review_title", "title", "summary", "heading", "subject"}
+DATE_KEYS = {"review_date", "date", "created_at", "timestamp", "time", "review_time"}
+PRODUCT_KEYS = {"product_name", "product", "item_name", "item"}
+
+
 def process_csv_upload(upload_id: int, org_id: int, file_content: bytes):
     db = SessionLocal()
     try:
@@ -34,24 +74,14 @@ def process_csv_upload(upload_id: int, org_id: int, file_content: bytes):
         
         for row in reader:
             try:
-                product_name = row.get("product_name", "Unknown Product").strip()
-                review_text = row.get("review_text", "").strip()
-                
+                review_text = _find_field(row, TEXT_KEYS)
                 if not review_text:
                     invalid_rows += 1
                     continue
                     
-                rating_str = row.get("rating")
-                rating = int(rating_str) if rating_str and rating_str.isdigit() else 5
-                
-                review_title = row.get("review_title", "").strip()
-                review_date_str = row.get("review_date", "").strip()
-                review_date = None
-                if review_date_str:
-                    try:
-                        review_date = datetime.strptime(review_date_str, "%Y-%m-%d")
-                    except ValueError:
-                        pass
+                rating = _parse_rating(_find_field(row, RATING_KEYS))
+                review_title = _find_field(row, TITLE_KEYS)
+                review_date = _parse_date(_find_field(row, DATE_KEYS))
                         
                 # ML Analysis
                 analysis = review_analyzer.analyze(review_text, fallback_rating=rating)

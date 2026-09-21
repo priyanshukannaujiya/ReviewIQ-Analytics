@@ -103,9 +103,22 @@ def analyze_review(payload: ReviewAnalyzeRequest, db: Session = Depends(get_db),
 
 
 @router.get("")
-def list_reviews(db: Session = Depends(get_db), org: Organization = Depends(get_current_organization)):
-    reviews = db.query(Review).filter(Review.organization_id == org.id).order_by(Review.created_at.desc()).all()
-    return {"items": [ReviewOut(**item.__dict__).model_dump() for item in reviews]}
+def list_reviews(
+    skip: int = 0,
+    limit: int = 50,
+    sentiment: str = None,
+    db: Session = Depends(get_db),
+    org: Organization = Depends(get_current_organization),
+):
+    query = db.query(Review).filter(Review.organization_id == org.id)
+    if sentiment:
+        query = query.filter(Review.sentiment == sentiment)
+    total = query.count()
+    reviews = query.order_by(Review.created_at.desc()).offset(skip).limit(limit).all()
+    return {
+        "total": total,
+        "items": [ReviewOut(**item.__dict__).model_dump() for item in reviews],
+    }
 
 
 @router.get("/{review_id}")
