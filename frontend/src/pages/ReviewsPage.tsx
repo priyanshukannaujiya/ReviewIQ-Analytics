@@ -30,11 +30,48 @@ export default function ReviewsPage() {
 
     try {
       const response = await api.post('/uploads/reviews', formData)
-      setUploadStatus({ type: 'success', message: response.data.message || 'File uploaded successfully!' })
-      // Invalidate dashboard caches so it fetches fresh data
-      queryClient.invalidateQueries({ queryKey: ['dashboard_overview'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard_sentiment'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard_recent_reviews'] })
+      const uploadId = response.data.upload_id
+      
+      if (!uploadId) {
+        setUploadStatus({ type: 'success', message: response.data.message || 'File uploaded successfully!' })
+        queryClient.invalidateQueries({ queryKey: ['dashboard_overview'] })
+        queryClient.invalidateQueries({ queryKey: ['dashboard_sentiment'] })
+        queryClient.invalidateQueries({ queryKey: ['dashboard_recent_reviews'] })
+        setIsUploading(false)
+        return
+      }
+
+      setUploadStatus({ type: 'success', message: 'Processing your reviews with ML... Please wait.' })
+      
+      let isComplete = false
+      let attempts = 0
+      while (!isComplete && attempts < 60) {
+        await new Promise(resolve => setTimeout(resolve, 2000))
+        attempts++
+        
+        try {
+          const statusRes = await api.get(`/uploads/${uploadId}`)
+          const status = statusRes.data.status
+          
+          if (status === 'completed') {
+            isComplete = true
+            setUploadStatus({ type: 'success', message: `Successfully processed ${statusRes.data.valid_rows} reviews!` })
+            queryClient.invalidateQueries({ queryKey: ['dashboard_overview'] })
+            queryClient.invalidateQueries({ queryKey: ['dashboard_sentiment'] })
+            queryClient.invalidateQueries({ queryKey: ['dashboard_recent_reviews'] })
+          } else if (status === 'failed') {
+            isComplete = true
+            setUploadStatus({ type: 'error', message: 'Failed to process the reviews.' })
+          }
+        } catch (e) {
+          // Ignore network errors during polling
+        }
+      }
+      
+      if (!isComplete) {
+        setUploadStatus({ type: 'error', message: 'Processing is taking a long time. It will finish in the background.' })
+      }
+      
     } catch (err: any) {
       setUploadStatus({ 
         type: 'error', 
