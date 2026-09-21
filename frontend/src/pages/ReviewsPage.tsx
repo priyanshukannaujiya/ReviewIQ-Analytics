@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import api from '../services/api'
 import { UploadCloud, CheckCircle, AlertCircle } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 
 export default function ReviewsPage() {
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadStatus, setUploadStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const queryClient = useQueryClient()
